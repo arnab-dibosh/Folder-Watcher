@@ -35,13 +35,8 @@ namespace Watcher
             _watchFolder.NotifyFilter =
             _watchFolder.NotifyFilter | System.IO.NotifyFilters.Attributes;
 
-            _watchFolder.Changed += new FileSystemEventHandler(eventRaised);
             _watchFolder.Created += new FileSystemEventHandler(eventRaised);
-            _watchFolder.Deleted += new FileSystemEventHandler(eventRaised);
-
            
-            _watchFolder.Renamed += new System.IO.RenamedEventHandler(eventRenameRaised);
-
             try
             {
                 _watchFolder.EnableRaisingEvents = true;
@@ -53,27 +48,30 @@ namespace Watcher
         }
 
         
-        private void eventRaised(object sender, System.IO.FileSystemEventArgs e)
+        private void eventRaised(object sender, FileSystemEventArgs e)
         {
             List<string> file_list = new List<string>();
             
+        
             foreach (string file_name in Directory.GetFiles(@"D:\Shared Folder"))
                 file_list.Add(file_name);
 
             Thread thread = new Thread(() => 
-                                        {
-                                            Clipboard.Clear();
-                                            Clipboard.SetData(DataFormats.FileDrop, file_list.ToArray());
-                                        }
-                                    );
+                    {
+                        Clipboard.Clear();
+
+                        if (file_list.Count == 1 && file_list.First().Substring(file_list.First().LastIndexOf('\\')+1) == "Board.txt")
+                            Clipboard.SetText(File.ReadAllText(file_list.First()));
+                        else
+                            Clipboard.SetData(DataFormats.FileDrop, file_list.ToArray());
+                    }
+                );
+
             thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
             thread.Start();
             thread.Join();     
         }
 
-        private void eventRenameRaised(object sender, System.IO.FileSystemEventArgs e)
-        {
-            MessageBox.Show(e.Name);
-        } 
+
     }
 }
